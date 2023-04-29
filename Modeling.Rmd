@@ -1,0 +1,115 @@
+---
+title: "Stat 245 Graphics and Modeling"
+author: "Eco Preserve Team: Trey Tripton, Hansol Kim, Quan, Huynh and Hayworth Anderson"
+date: 'December 15, 2021'
+output: 
+  html_document:
+    fig_height: 2.2
+    fig_width: 4
+  pdf_document:
+    fig_height: 4
+    fig_width: 8
+  word_document:
+    fig_height: 2.2
+    fig_width: 4
+---
+
+```{r, setup, include = FALSE}
+# load packages that are going to be used
+require(tidyverse)   # this loads mosaic, ggformula, etc. too
+require(ggformula)
+require(mosaic)
+require(s245)
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+theme_set(theme_bw(base_size=12))     # change theme for ggplot2/ggformula
+
+knitr::opts_chunk$set(
+  echo = TRUE,      # for homework, always show R code (this is the default)
+  tidy = FALSE,     # display code as typed (rather than reformatted)
+  size = "small",   # slightly smaller font for code
+  message = FALSE, warning = FALSE) # don't print warnings or messages in compiled document. So you MUST check them in RStudio!
+```
+
+### Read in Completely Tidied Dataset
+```{r}
+leafdropdata <- read.csv('leafdropdata.csv')
+```
+
+### Choose Response and Predictor Variables
+
+Our variable of interest is the Leaf Drop Mass ($g/m^2$). Since the mass of each basket was measure once immediately after gather the basket and another time two weeks later, we will use the masses measure after two weeks because the leaves have time to dry and the water weight on them has by then evaporated. The measurement after two weeks is the most accurate.
+
+The variables that could be predictors are year, day, precipitation ($mm$), wind speed ($m/s$), and the average temperature by day ($°C$). We have seven years of data from 2010-2016, and the weather or seasons could vary from year to year. As we know, the winter season is being approached as the days go on in this data set, so the day clearly should be a predictor of the dropping leaves. Similarly, the average temperature each day overall gets colder as these days go on, so temperature should be a predictor. The precipitation should be a predictor as rain could cause the leaves to fall. We also chose wind speed as a predictor because more wind or faster wind speeds can cause leaves to fall. We decided to omit snow as a predictor variable because there are a limited number of rows in the data set that have a snow height higher than zero. This could be for many reasons: the people gathering data would choose to gather on days that it did not snow, days where it snowed caused the baskets to have no leaves or ruined the leaves which led to non-applicable rows, or it just so happened that it rarely snowed on the days that baskets were collected. We also decided not too include the month or week variable as the day-to-day differences should cover time as a predictor for each individual year.
+
+### Fit the Model
+```{r}
+require(mgcv)
+leafdropdata <- leafdropdata %>%
+  mutate(Week = as.character(Week)) %>%  
+  mutate(After2Weeks = ifelse(After2Weeks == 0, 0.0001, After2Weeks)) 
+fit_mod <- gamm(After2Weeks ~ s(Julian, k = 5, bs = 'cc') + Year + 
+                  s(WindSpeed, k = 5, bs = 'tp') + 
+                  Precipitation + 
+                  s(AverageTemperature, k = 5, bs = 'tp'), random = list(Date = ~1, Week = ~1), 
+                data = leafdropdata, 
+                method = 'ML', 
+                family = Gamma(link = 'log'))
+summary(fit_mod$gam)
+```
+
+
+### Check independence
+```{r}
+fit_resids <- as.numeric(resid(fit_mod$lme))
+
+acf(fit_resids)
+```
+Our model passes the condition of independence as the ACF remains mostly within the confidence bounds and there are no trends.
+
+### Mean variance
+```{r}
+gf_point(as.numeric(resid(fit_mod$lme, by = 'Year')) ~ as.numeric(fitted(fit_mod$lme))) + 
+  labs(x = "Fitted values", 
+       y = "Residuals")
+```
+Our model passes the condition of Mean Variance as there are no specific trends in the Residuals vs. Fitted scatter plot.
+
+### Prediction Plot
+```{r}
+require(ggeffects)
+## Prediction Plot for Leaf Drop Mass by Day for each Year
+pred_year <- ggpredict(fit_mod, terms = c('Julian', 'Year'))
+plot(pred_year) +
+  labs(x = "Days", 
+       y = "Leaf Drop Mass (g/m^2)", 
+       color = "Year")
+
+## Prediction Plot for Leaf Drop Mass by Day and Wind Speed
+pred_ws <- ggpredict(fit_mod, terms = c("Julian", "WindSpeed"))
+plot(pred_ws) +
+  labs(x = "Days",
+       y = "Leaf Drop Mass (g/m^2)",
+       color = "Wind Speed (m/s)")
+
+## Prediction Plot for Leaf Drop Mass by Average Temperature
+pred_at <- ggpredict(fit_mod, terms = c("Julian", "AverageTemperature"))
+plot(pred_at) +
+  labs(x = "Days",
+       y = "Leaf Drop Mass (g/m^2)",
+       color = "AverageTemperature (C)")
+```
+The prediction plot is predicted by three categories: Year, WindSpeed, and AverageTemperature. The peak mass of leaves happens at around day 300 which is at the end of October. At Year 2010 is predicted to have the most leaf drop mass. It is predicted to have the most mass leaf drop at windspeed of around 20m/s. Leaves are predicted to drop most at temperature of 16 Celcius. 
+The prediction graphs shows us that the leaves are predicted to drop relatively normally and unimodally which confirms our conclusions from graphic exploration. 
+
+```{r}
+anova(fit_mod$lme)
+```
+
+### Overall Conclusions
+Our model, through prediction plots, seems to confirm what we interpreted from our graphics. Leaf Drop Mass takes a normal curve over time and the other predictors do have an effect on how many leaves drop as well. Small p-value (<0.05) indicates that we have strong evidence to our alternative hypothesis that there is correlation with our response variable. Our research questions consulted by Dr. Van Dragt were: How does the dry weight of leaves falling compare week to week? How do the seasons vary year to year? As in, does the leaf falling "season" begin earlier or later depending on the year? How does the weather affect the total dry weight of the leaves? Our group was able to provide several visualizations that compare weight of leaf drops within each baskets by days of year, weeks, and other factors as requested by Dr. Van Dragt. Although we knew that leaves fall in the fall season (due to Michigan's distinct four seasons), it was fascinating to manipulate data to visualize and confirm that leaves do drop the most in late October through early November. Overall, we were extremely honored to work with Dr. Van Dragt and this project was meaningful and fulfilling experience for all us. 
+
+
+
+

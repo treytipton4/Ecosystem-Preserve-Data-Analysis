@@ -1,0 +1,293 @@
+---
+title: "Stat 245 Tidying the Dataset"
+author: "Eco Preserve Team: Trey, Hansol, Quan, and Hayworth"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  pdf_document:
+    fig_height: 2.2
+    fig_width: 4
+  html_document:
+    fig_height: 2.2
+    fig_width: 4
+  word_document:
+    fig_height: 2.2
+    fig_width: 4
+---
+
+```{r, setup, include = FALSE}
+# load packages that are going to be used
+require(tidyverse)   # this loads mosaic, ggformula, etc. too
+require(ggformula)
+require(mosaic)
+require(s245)
+require(data.table)
+library(dplyr)
+library(lubridate)
+
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+theme_set(theme_bw(base_size=12))     # change theme for ggplot2/ggformula
+
+knitr::opts_chunk$set(
+  echo = TRUE,      # for homework, always show R code (this is the default)
+  tidy = FALSE,     # display code as typed (rather than reformatted)
+  size = "small",   # slightly smaller font for code
+  message = FALSE, warning = FALSE) # don't print warnings or messages in compiled document. So you MUST check them in RStudio!
+```
+
+
+### Read in the Given Datasets for 2010-2016 Leaf Drop Data
+```{r}
+library(tidyverse)
+## Skip lines and omit any blanks, NA's, or other insufficient cells
+data2010 <- read.csv('2010 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 3)
+data2011 <- read.csv('2011 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 3)
+data2012 <- read.csv('2012 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 3)
+data2013 <- read.csv('2013 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 4)
+data2014 <- read.csv('2014 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X', 'thanksgiving', 'Thanksgiving'), skip = 4)
+data2015 <- read.csv('2015 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 4)
+data2016 <- read.csv('2016 Leaf Drop Data Sheets.csv', na = c('', 'x', 'X'), skip = 4)
+```
+
+### Rename Columns
+```{r}
+names(data2010)[1] <- 'Date'
+names(data2010)[2] <- 'Basket'
+names(data2010)[3] <- 'InitialWeight'
+names(data2010)[4] <- 'After2Weeks'
+
+
+names(data2011)[2] <- 'Date'
+names(data2011)[3] <- 'Basket'
+names(data2011)[4] <- 'InitialWeight'
+names(data2011)[5] <- 'After2Weeks'
+
+
+names(data2012)[2] <- 'Date'
+names(data2012)[3] <- 'Basket'
+names(data2012)[4] <- 'InitialWeight'
+names(data2012)[5] <- 'After2Weeks'
+
+
+names(data2013)[2] <- 'Date'
+names(data2013)[3] <- 'Basket'
+names(data2013)[4] <- 'InitialWeight'
+names(data2013)[5] <- 'After2Weeks'
+
+
+names(data2014)[2] <- 'Date'
+names(data2014)[3] <- 'Basket'
+names(data2014)[4] <- 'InitialWeight'
+names(data2014)[5] <- 'After2Weeks'
+
+
+names(data2015)[2] <- 'Date'
+names(data2015)[3] <- 'Basket'
+names(data2015)[4] <- 'InitialWeight'
+names(data2015)[5] <- 'After2Weeks'
+
+
+names(data2016)[2] <- 'Date'
+names(data2016)[3] <- 'Basket'
+names(data2016)[4] <- 'InitialWeight'
+names(data2016)[5] <- 'After2Weeks'
+
+## Keep only relevant columns
+data2010 <- data2010 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2011 <- data2011 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2012 <- data2012 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2013 <- data2013 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2014 <- data2014 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2015 <- data2015 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+data2016 <- data2016 %>%
+  select('Date', 'Basket', 'InitialWeight', 'After2Weeks')
+
+```
+
+### Pasting Together
+```{r}
+## Keep only necessary rows
+data2010 <- data2010[1:75,]
+data2011 <- data2011[1:114,]
+data2012 <- data2012[1:105,]
+data2013 <- data2013[1:133,]
+data2014 <- data2014[1:129,]
+data2015 <- data2015[1:115,]
+data2016 <- data2016[1:124,]
+
+## Bind the six datasets into one
+newdata <- bind_rows(data2010, data2011)
+newdata <- bind_rows(newdata, data2012)
+newdata <- bind_rows(newdata, data2013)
+
+## Make 2014 column for Basket an integer
+data2014 <- data2014 %>%
+  mutate(Basket = as.integer(Basket))
+
+
+newdata <- bind_rows(newdata, data2014)
+newdata <- bind_rows(newdata, data2015)
+
+finaldata <- bind_rows(newdata, data2016)
+```
+
+### Replace dates labeled as '/16' to '/2016'
+```{r}
+## Rename informal dates
+## Amend each informal date separately  so that days such as '10/16/2014' are not renamed to '10/2016/2014'
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '11/23/16', '11/23/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '11/28/16', '11/28/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '11/29/16', '11/29/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '11/30/16', '11/30/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '12/01/16', '12/01/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '12/02/16', '12/02/2016'))
+finaldata <- finaldata%>%
+  rename(Date = 'Date')%>%
+  mutate(Date = stringr::str_replace(Date, '12/03/16', '12/03/2016'))
+finaldata <- finaldata%>%
+  na.omit()
+```
+
+### Separate Date Variable into Month, Day, and Year Variables
+```{r}
+finaldata <- finaldata %>%
+  separate(Date, into = c('Month', 'Day', 'Year'), sep = '/')
+
+finaldata <- finaldata %>%
+  mutate(Day = as.numeric(Day))
+```
+
+### Add New Date Variable and 1-365 Julian Date Variable
+```{r}
+finaldata$Date <- do.call(paste, list(finaldata$Month, finaldata$Day, finaldata$Year))
+finaldata$Date <- as.Date(finaldata$Date, format=c("%m %d %Y"))
+
+finaldata$julian_date <- as.numeric(format(finaldata$Date, "%j"))
+```
+
+### Add Week Variable
+```{r}
+finaldata <- finaldata %>%
+  mutate(Week = week(Date))
+
+finaldata <- finaldata %>%
+  mutate(Week = as.numeric(Week))
+```
+
+### Add in Weather Data
+```{r}
+weather_data <- read.csv('https://sldr.netlify.app/data/gr-weather-data.csv') 
+weather_data = subset(weather_data, select = -c(wdir, wpgt, tsun))
+```
+
+### Wrangle the Weather Data
+```{r}
+## Keep only columns of interest
+weather_data <- weather_data %>%
+  select(date, prcp, snow, wspd, tmax, tmin, tavg, wspd)
+
+weather_data <- weather_data %>%
+  rename(Date = date)
+```
+
+### Merging the Weather and Leaf Drop Data
+```{r}
+## Create Common Date Variable between both data sets
+weather_data <- weather_data %>%
+  separate(Date, into = c('Year', 'Month', 'Day'), sep = '-')
+
+weather_data <- weather_data %>%
+  mutate(Day = as.numeric(Day))
+
+weather_data$Date <- do.call(paste, list(weather_data$Month, weather_data$Day, weather_data$Year))
+weather_data$Date <- as.Date(weather_data$Date, format=c("%m %d %Y"))
+
+## Merge by Date
+merged_data <- merge(x = finaldata, y = weather_data, by = 'Date')
+```
+
+### Organize Final Dataset
+```{r}
+## Remove Repeated Columns
+merged_data <- merged_data %>%
+  select(-'Month.y', -'Day.y', -'Year.y')
+
+## Rename for Better Understandability
+merged_data <- merged_data %>%
+  rename(Month = Month.x) %>%
+  rename(Day = Day.x) %>%
+  rename(Year = Year.x) %>%
+  rename(Julian = julian_date) %>%
+  rename(Precipitation = prcp) %>%
+  rename(Snow = snow) %>%
+  rename(WindSpeed = wspd) %>%
+  rename(MaxTemperature = tmax) %>%
+  rename(MinTemperature = tmin) %>% 
+  rename(AverageTemperature = tavg)
+
+glimpse(merged_data)
+
+```
+### North vs. South of Stream Variable 
+```{r}
+## Create Variable where Baskets 1-6, 11 are North of the Stream, and Baskets 7-10, 12 are South of the Stream
+merged_data <- merged_data %>%
+  mutate(NorthSouth = case_when(Basket <= 6 ~ 'N',
+                                 Basket == 11 ~ 'N',
+                                 Basket == 7 ~ 'S',
+                                 Basket == 8 ~ 'S',
+                                 Basket == 9 ~ 'S',
+                                 Basket == 10 ~ 'S',
+                                 Basket == 12 ~ 'S',))
+```
+
+### Conversion and Units
+```{r}
+## Convert Basket Leaf Mass to Leaf Mass per Square Meter
+merged_data <- merged_data %>%
+  mutate(After2Weeks = (After2Weeks/0.165))
+```
+Units for Variables:
+After2Weeks (Leaf Drop Mass): Grams per Square Meter ($g/m^2$)
+Precipitation: Millimeters ($mm$)
+Snow: Millimeters ($mm$)
+WindSpeed: Meters per Second ($m/s$)
+Temperature: Degrees Celsius ($°C$)
+
+### Write the File
+```{r}
+write.csv(merged_data,'leafdropdata.csv')
+```
+
+
+The "merged_data" after running everything is the Leaf Drop Data and Weather Data finalized.
+It is written into a new csv file called 'leafdropdata'.
+
+
+
+
