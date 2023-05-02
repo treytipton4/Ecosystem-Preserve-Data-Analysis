@@ -6,6 +6,6 @@ Our goal was to determine what factors affect the leaves drop and to see how lea
 
 An HTML of the full project, including wrangling, can be seen at the link below.
 
-[Ecosystem Preserve Data Analysis](EcosystemPreserveProject.html)
+[Ecosystem Preserve Data Analysis](https://htmlpreview.github.io/?https://github.com/treytipton4/Ecosystem-Preserve-Data-Analysis/blob/main/EcosystemPreserveProject.html)
 
 Project by Trey Tipton, Hansol Kim, Quan Huynh, and Hayworth Anderson
