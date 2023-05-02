@@ -6,6 +6,6 @@ Our goal was to determine what factors affect the leaves drop and to see how lea
 
 An HTML of the full project, including wrangling, can be seen at the link below.
 
-[Ecosystem Preserve Data Analysis](https://r.cs.calvin.edu/s/9f74b9f4988a16fe268ba/file_show?path=%2Frprojects%2Ftct5%2FEcosystem-Preserve-Data-Analysis%2FEcosystemPreserveProject.html)
+[Ecosystem Preserve Data Analysis](EcosystemPreserveProject.html)
 
 Project by Trey Tipton, Hansol Kim, Quan Huynh, and Hayworth Anderson
